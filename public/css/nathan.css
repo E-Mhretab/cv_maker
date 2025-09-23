@@ -1,0 +1,367 @@
+/* Nathan Jethoe CV - Bootstrap Enhanced */
+
+/* Root Variables */
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --info-color: #0dcaf0;
+  --warning-color: #ffc107;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+}
+
+/* Global Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: var(--dark-color);
+}
+
+/* Mobile Navigation */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1030;
+}
+
+.navbar-toggler {
+  padding: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+/* Navigation Button */
+.btn-outline-light {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-brand {
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+  color: white !important;
+}
+
+/* Sidebar Styling */
+.bg-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  min-height: 100vh;
+  position: relative;
+}
+
+.bg-primary h1 {
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.5px;
+}
+
+.bg-primary .lead {
+  font-weight: 300;
+  opacity: 0.9;
+}
+
+.bg-primary h3 {
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.bg-primary p {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.bg-primary a {
+  color: white;
+  text-decoration: underline;
+}
+
+.bg-primary a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Main Content Area */
+.col-lg-8 {
+  background-color: #fafbfc;
+  min-height: 100vh;
+}
+
+/* Section Headers */
+.text-primary {
+  color: var(--primary-color) !important;
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.text-primary::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 3rem;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+  border-radius: 2px;
+}
+
+/* Work Experience and Education Lists */
+.list-unstyled li {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.list-unstyled li h3 {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.list-unstyled li p {
+  margin-bottom: 0.25rem;
+}
+
+.list-unstyled li p strong {
+  color: var(--dark-color);
+  font-weight: 600;
+}
+
+/* Footer */
+footer {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-top: 3px solid var(--primary-color);
+  margin-top: 2rem;
+  padding: 1.5rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+  }
+  
+  .bg-primary {
+    min-height: auto;
+    padding: 2rem 1rem !important;
+  }
+  
+  .col-lg-8 {
+    padding: 2rem 1rem !important;
+  }
+}
+
+/* Mobile Styles - Ensure everything is visible */
+@media (max-width: 767.98px) {
+  .container-fluid {
+    padding: 0;
+  }
+  
+  .bg-primary {
+    padding: 1rem 0.75rem !important;
+    min-height: auto;
+    padding-bottom: 2rem !important;
+  }
+  
+  .col-lg-8 {
+    padding: 1rem 0.75rem !important;
+  }
+  
+  /* Mobile Home Button - Make it visible */
+  .btn-outline-light {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    text-align: center;
+    font-weight: 600;
+    border-width: 2px;
+    display: block !important;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Mobile Personal Info - Make sure it's visible */
+  .bg-primary h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    display: block !important;
+  }
+  
+  .bg-primary .lead {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    display: block !important;
+  }
+  
+  .bg-primary p {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    display: block !important;
+  }
+  
+  /* Mobile Hobbies Section - Make sure it's visible */
+  .bg-primary h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    margin-top: 1rem;
+    text-align: center;
+    display: block !important;
+  }
+  
+  .bg-primary .mb-4 {
+    display: block !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .bg-primary .mb-4 p {
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+    padding: 0.2rem 0;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0.3rem;
+    display: block !important;
+  }
+  
+  .list-unstyled li {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .text-primary {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Force visibility of all sidebar content */
+  .bg-primary > * {
+    display: block !important;
+  }
+  
+  .bg-primary .mb-4 {
+    display: block !important;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 575.98px) {
+  .bg-primary {
+    padding: 0.75rem 0.5rem !important;
+  }
+  
+  .col-lg-8 {
+    padding: 0.75rem 0.5rem !important;
+  }
+  
+  .bg-primary h1 {
+    font-size: 1.3rem;
+  }
+  
+  .bg-primary .lead {
+    font-size: 0.9rem;
+  }
+  
+  .bg-primary p {
+    font-size: 0.8rem;
+  }
+  
+  .bg-primary h3 {
+    font-size: 0.95rem;
+  }
+  
+  .bg-primary .mb-4 p {
+    font-size: 0.75rem;
+  }
+  
+  .btn-outline-light {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.8rem;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn-outline-light:hover {
+    transform: none;
+  }
+  
+  .navbar-brand:hover {
+    transform: none;
+  }
+  
+  .btn-outline-light {
+    min-height: 44px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .navbar {
+    display: none !important;
+  }
+  
+  .btn-outline-light {
+    display: none !important;
+  }
+  
+  .bg-primary {
+    background: #f8f9fa !important;
+    color: var(--dark-color) !important;
+    min-height: auto !important;
+    position: static !important;
+  }
+  
+  .list-unstyled li {
+    box-shadow: none !important;
+    border: 1px solid #dee2e6 !important;
+  }
+}
+
+/* Focus States for Accessibility */
+.btn-outline-light:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .btn-outline-light:hover {
+    transform: none;
+  }
+  
+  .navbar-brand:hover {
+    transform: none;
+  }
+}
