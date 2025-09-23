@@ -3,43 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cv;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfExportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ResumePdfController extends Controller
 {
+    protected $pdfExportService;
+
+    public function __construct(PdfExportService $pdfExportService)
+    {
+        $this->pdfExportService = $pdfExportService;
+    }
+
     /**
      * Generate and download CV as PDF
      */
     public function download(Cv $cv)
     {
-        // Load CV with all related data
-        $cv->load([
-            'user',
-            'metadata',
-            'workExperiences',
-            'education',
-            'skills',
-            'languages',
-            'hobbies'
-        ]);
+        // Check if user can access this CV
+        if (Auth::user()->role !== 'admin' && $cv->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
-        // Generate PDF filename
-        $filename = 'CV_' . str_replace(' ', '_', $cv->name) . '_' . date('Y-m-d') . '.pdf';
+        // Generate PDF using the service
+        $result = $this->pdfExportService->generatePdf($cv);
 
-        // Generate PDF using the blade template
-        $pdf = Pdf::loadView('cvs.pdf', compact('cv'));
-
-        // Set PDF options
-        $pdf->setPaper('A4', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial'
-        ]);
-
-        // Download the PDF
-        return $pdf->download($filename);
+        if ($result['success']) {
+            return response($result['content'])
+                ->header('Content-Type', $result['mime_type'])
+                ->header('Content-Disposition', 'attachment; filename="' . $result['filename'] . '"');
+        } else {
+            // Return HTML fallback
+            return response($result['content'])
+                ->header('Content-Type', $result['mime_type'])
+                ->header('Content-Disposition', 'attachment; filename="' . $result['filename'] . '"');
+        }
     }
 
     /**
@@ -47,29 +46,23 @@ class ResumePdfController extends Controller
      */
     public function stream(Cv $cv)
     {
-        // Load CV with all related data
-        $cv->load([
-            'user',
-            'metadata',
-            'workExperiences',
-            'education',
-            'skills',
-            'languages',
-            'hobbies'
-        ]);
+        // Check if user can access this CV
+        if (Auth::user()->role !== 'admin' && $cv->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
-        // Generate PDF using the blade template
-        $pdf = Pdf::loadView('cvs.pdf', compact('cv'));
+        // Generate PDF using the service
+        $result = $this->pdfExportService->generatePdf($cv);
 
-        // Set PDF options
-        $pdf->setPaper('A4', 'portrait');
-        $pdf->setOptions([
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'defaultFont' => 'Arial'
-        ]);
-
-        // Stream the PDF
-        return $pdf->stream('CV_' . str_replace(' ', '_', $cv->name) . '.pdf');
+        if ($result['success']) {
+            return response($result['content'])
+                ->header('Content-Type', $result['mime_type'])
+                ->header('Content-Disposition', 'inline; filename="' . $result['filename'] . '"');
+        } else {
+            // Return HTML fallback
+            return response($result['content'])
+                ->header('Content-Type', $result['mime_type'])
+                ->header('Content-Disposition', 'inline; filename="' . $result['filename'] . '"');
+        }
     }
 }

@@ -201,7 +201,7 @@
                         <p class="mb-0 mt-2">Step 2: Fill in your CV information</p>
                     </div>
                     <div class="card-body p-0">
-                        <form action="http://127.0.0.1:8000/cvs" method="POST" id="cvForm" onsubmit="console.log('Form onsubmit triggered'); return true;">
+                        <form action="{{ Auth::check() ? route('cvs.store') : route('guest.cvs.store') }}" method="POST" id="cvForm" onsubmit="console.log('Form onsubmit triggered'); return true;">
                         <!-- Debug: Form action should be /cvs -->
                         <script>
                             console.log('Form action URL:', '/cvs');

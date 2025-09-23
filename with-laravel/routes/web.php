@@ -6,7 +6,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\ResumePdfController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', [HomeController::class, 'index'])->name('welcome');
 
@@ -15,8 +17,11 @@ Route::get('/', [HomeController::class, 'index'])->name('welcome');
 // Authentication routes
 require __DIR__.'/auth.php';
 
-// Dashboard route - redirect to CVs
+// Dashboard route - redirect based on user role
 Route::get('/dashboard', function () {
+    if (Auth::user()->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
     return redirect()->route('cvs.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -26,6 +31,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Guest CV creation routes (no authentication required)
+Route::get('/create-cv', [CvController::class, 'guestCreate'])->name('guest.cvs.create');
+Route::post('/create-cv/form', [CvController::class, 'guestCreateForm'])->name('guest.cvs.create-form');
+Route::post('/create-cv/store', [CvController::class, 'guestStore'])->name('guest.cvs.store');
+Route::get('/cv/{cv}/view', [CvController::class, 'guestShow'])->name('guest.cvs.show');
+
+// Public CV viewing route (no authentication required for public CVs)
+Route::get('/cv/{cv}', [CvController::class, 'publicShow'])->name('cvs.public.show');
 
 // Resource routes for CVs (Resumes) - Protected by authentication
 Route::middleware(['auth'])->group(function () {
@@ -50,6 +64,13 @@ Route::resource('users', UserController::class);
 // Template routes
 Route::get('/templates', [TemplateController::class, 'index'])->name('templates.index');
 Route::get('/templates/{template}', [TemplateController::class, 'show'])->name('templates.show');
+
+// Admin routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/audit', [AdminController::class, 'audit'])->name('audit');
+    Route::get('/sessions', [AdminController::class, 'sessions'])->name('sessions');
+});
 
 // Legacy URL redirects (301 Permanent Redirects)
 // Main pages

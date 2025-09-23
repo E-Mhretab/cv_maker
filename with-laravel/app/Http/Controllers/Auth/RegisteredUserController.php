@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\GuestCvTransferService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,7 +65,31 @@ class RegisteredUserController extends Controller
 
             Auth::login($user);
 
-            return redirect(route('dashboard', absolute: false));
+            // Transfer guest CVs to the new user account
+            $guestCvTransferService = new GuestCvTransferService();
+            $transferredCount = $guestCvTransferService->transferGuestCvsToUser($user);
+            
+            if ($transferredCount > 0) {
+                \Log::info('Transferred guest CVs to new user', [
+                    'user_id' => $user->id,
+                    'transferred_count' => $transferredCount
+                ]);
+            }
+
+            // Redirect admin users to admin dashboard, others to regular dashboard
+            if ($user->role === 'admin') {
+                $redirect = redirect(route('admin.dashboard', absolute: false));
+            } else {
+                $redirect = redirect(route('dashboard', absolute: false));
+            }
+            
+            // Add success message if CVs were transferred
+            if ($transferredCount > 0) {
+                $redirect->with('message', "Welcome! We found {$transferredCount} CV(s) you created as a guest and transferred them to your account.");
+                $redirect->with('type', 'success');
+            }
+            
+            return $redirect;
         } catch (\Exception $e) {
             \Log::error('Registration failed:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return back()->withErrors(['registration' => 'Registration failed. Please try again.'])->withInput();

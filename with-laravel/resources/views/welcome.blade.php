@@ -65,7 +65,7 @@
                     <p class="hero-subtitle">Build stunning, ATS-friendly CVs with our easy-to-use builder. Choose from professional templates and land your dream job faster.</p>
                     
                     <div class="hero-buttons">
-                        <a href="{{ route('cvs.create') }}" class="btn-hero btn-hero-primary">
+                        <a href="{{ route('guest.cvs.create') }}" class="btn-hero btn-hero-primary">
                             <i class="fas fa-plus"></i>Create Free CV
                         </a>
                         @auth
@@ -159,7 +159,7 @@
                         </div>
                         <h3 class="text-muted mb-3">No CVs Available Yet</h3>
                         <p class="text-muted mb-4">Be the first to create and publish a professional CV!</p>
-                        <a href="{{ route('cvs.create') }}" class="btn btn-primary-custom">
+                        <a href="{{ route('guest.cvs.create') }}" class="btn btn-primary-custom">
                             <i class="fas fa-plus me-2"></i>Create Your CV
                         </a>
                     </div>
@@ -178,7 +178,7 @@
                             <p class="cv-summary flex-grow-1">
                                 {{ $cv->profile_summary ?: 'Professional CV available for viewing. Click to see the full profile and experience.' }}
                             </p>
-                            <a href="{{ route('cvs.show', $cv) }}" class="btn btn-primary btn-view-cv mt-auto">
+                            <a href="{{ route('cvs.public.show', $cv) }}" class="btn btn-primary btn-view-cv mt-auto">
                                 <i class="fas fa-eye me-2"></i>View Full CV
                             </a>
                         </div>
@@ -236,7 +236,7 @@
             <div class="col-lg-2 col-md-6">
                 <h6 class="fw-bold mb-3">Get Started</h6>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('cvs.create') }}" class="btn btn-outline-light btn-sm">
+                    <a href="{{ route('guest.cvs.create') }}" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-plus me-1"></i>Create CV
                     </a>
                     <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">

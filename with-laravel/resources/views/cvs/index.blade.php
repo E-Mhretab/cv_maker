@@ -45,6 +45,11 @@
             <a href="{{ route('welcome') }}" class="navbar-brand fw-bold">
                 <i class="fas fa-arrow-left me-2"></i>Back to Home
             </a>
+            @if(Auth::user()->role === 'admin')
+            <a href="{{ route('admin.dashboard') }}" class="navbar-brand fw-bold">
+                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+            </a>
+            @endif
             <span class="navbar-text fw-semibold">
                 <i class="fas fa-cogs me-2"></i>CV Management
             </span>
@@ -111,25 +116,25 @@
         <div class="row mb-4">
             <div class="col-md-3 mb-3">
                 <div class="stats-card p-3 text-center">
-                    <h3 class="h4 mb-1">{{ $cvs->count() }}</h3>
+                    <h3 class="h4 mb-1">{{ isset($stats) ? $stats['total_cvs'] : $cvs->count() }}</h3>
                     <p class="mb-0">Total CVs</p>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stats-card p-3 text-center">
-                    <h3 class="h4 mb-1">{{ $cvs->where('metadata.template_type', 'nathan')->count() }}</h3>
+                    <h3 class="h4 mb-1">{{ isset($stats) ? $stats['nathan_templates'] : $cvs->where('metadata.template_type', 2)->count() }}</h3>
                     <p class="mb-0">Nathan Templates</p>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stats-card p-3 text-center">
-                    <h3 class="h4 mb-1">{{ $cvs->where('metadata.template_type', 'esey')->count() }}</h3>
+                    <h3 class="h4 mb-1">{{ isset($stats) ? $stats['esey_templates'] : $cvs->where('metadata.template_type', 1)->count() }}</h3>
                     <p class="mb-0">Esey Templates</p>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="stats-card p-3 text-center">
-                    <h3 class="h4 mb-1">{{ $cvs->where('id', '>=', 1)->count() }}</h3>
+                    <h3 class="h4 mb-1">{{ isset($stats) ? $stats['created_today'] : $cvs->where('created_at', '>=', today())->count() }}</h3>
                     <p class="mb-0">Created Today</p>
                 </div>
             </div>
@@ -150,12 +155,12 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label for="template" class="form-label">Filter by Template</label>
-                    <select class="form-select" id="template" name="template">
+                    <label for="template_type" class="form-label">Filter by Template</label>
+                    <select class="form-select" id="template_type" name="template_type">
                         <option value="">All Templates</option>
-                        <option value="nathan" {{ request('template') === 'nathan' ? 'selected' : '' }}>Nathan Template</option>
-                        <option value="esey" {{ request('template') === 'esey' ? 'selected' : '' }}>Esey Template</option>
-                        <option value="mirian" {{ request('template') === 'mirian' ? 'selected' : '' }}>Mirian Template</option>
+                        <option value="1" {{ request('template_type') == '1' ? 'selected' : '' }}>Esey Template</option>
+                        <option value="2" {{ request('template_type') == '2' ? 'selected' : '' }}>Nathan Template</option>
+                        <option value="3" {{ request('template_type') == '3' ? 'selected' : '' }}>Mirian Template</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -183,15 +188,22 @@
                     </div>
                 </div>
             @else
-                @foreach($cvs as $cv)
-                <div class="col-lg-6 col-xl-4 mb-4">
+                @foreach($cvs as $index => $cv)
+                <div class="col-lg-6 col-xl-4 mb-4 cv-item {{ $index >= 12 ? 'd-none' : '' }}" data-index="{{ $index }}">
                     <div class="cv-card card h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <h5 class="card-title mb-0">{{ $cv->name }}</h5>
                                 <div class="d-flex flex-column align-items-end">
-                                    <span class="badge template-badge bg-{{ $cv->metadata && $cv->metadata->template_type === 'nathan' ? 'primary' : 'success' }} mb-1">
-                                        {{ ucfirst($cv->metadata->template_type ?? 'nathan') }} Template
+                                    <span class="badge template-badge bg-{{ $cv->metadata && $cv->metadata->template_type == 2 ? 'primary' : 'success' }} mb-1">
+                                        @php
+                                            $templates = [
+                                                1 => 'Esey Template',
+                                                2 => 'Nathan Template', 
+                                                3 => 'Mirian Template',
+                                            ];
+                                            echo $templates[$cv->metadata->template_type] ?? 'Unknown Template';
+                                        @endphp
                                     </span>
                                     @if($cv->metadata && $cv->metadata->is_public)
                                         <span class="badge bg-success" style="font-size: 0.7rem;">
@@ -221,6 +233,10 @@
                             <div class="text-muted small mb-3">
                                 <i class="fas fa-calendar me-1"></i>
                                 Created: {{ $cv->metadata && $cv->metadata->published_at ? $cv->metadata->published_at->format('M j, Y') : 'Date not available' }}
+                                @if(Auth::user()->role === 'admin' && $cv->user)
+                                    <br><i class="fas fa-user me-1"></i>
+                                    Owner: {{ $cv->user->name }} ({{ $cv->user->email }})
+                                @endif
                             </div>
                             
                             <div class="action-buttons">
@@ -233,17 +249,21 @@
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 @if($cv->metadata && $cv->metadata->is_public)
-                                    <a href="{{ route('cvs.publish', $cv) }}?action=unpublish" 
-                                       class="btn btn-outline-secondary btn-sm" title="Make Private"
-                                       onclick="return confirm('Are you sure you want to make this CV private?')">
-                                        <i class="fas fa-lock"></i>
-                                    </a>
+                                    <form method="POST" action="{{ route('cvs.publish', $cv) }}?action=unpublish" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm" title="Make Private"
+                                                onclick="return confirm('Are you sure you want to make this CV private?')">
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    </form>
                                 @else
-                                    <a href="{{ route('cvs.publish', $cv) }}?action=publish" 
-                                       class="btn btn-outline-success btn-sm" title="Make Public"
-                                       onclick="return confirm('Are you sure you want to make this CV public? It will be visible to everyone.')">
-                                        <i class="fas fa-globe"></i>
-                                    </a>
+                                    <form method="POST" action="{{ route('cvs.publish', $cv) }}?action=publish" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="Make Public"
+                                                onclick="return confirm('Are you sure you want to make this CV public? It will be visible to everyone.')">
+                                            <i class="fas fa-globe"></i>
+                                        </button>
+                                    </form>
                                 @endif
                                 <form method="POST" action="{{ route('cvs.destroy', $cv) }}" class="d-inline">
                                     @csrf
@@ -261,23 +281,18 @@
             @endif
         </div>
 
-        <!-- Pagination (if needed) -->
+        <!-- Load More Button -->
         @if($cvs->count() > 12)
         <div class="row mt-4">
-            <div class="col-12">
-                <nav aria-label="CV pagination">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item disabled">
-                            <span class="page-link">Previous</span>
-                        </li>
-                        <li class="page-item active">
-                            <span class="page-link">1</span>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link">Next</span>
-                        </li>
-                    </ul>
-                </nav>
+            <div class="col-12 text-center">
+                <button type="button" class="btn btn-primary btn-lg" id="loadMoreBtn" onclick="loadMoreCVs()">
+                    <i class="fas fa-plus me-2"></i>Load More CVs
+                </button>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        Showing <span id="showingCount">12</span> of {{ $cvs->count() }} CVs
+                    </small>
+                </div>
             </div>
         </div>
         @endif
@@ -285,5 +300,60 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentlyShowing = 12;
+        const totalCVs = {{ $cvs->count() }};
+        
+        function loadMoreCVs() {
+            const hiddenCVs = document.querySelectorAll('.cv-item.d-none');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            const showingCount = document.getElementById('showingCount');
+            
+            // Show next 12 CVs (or remaining if less than 12)
+            const nextBatch = Array.from(hiddenCVs).slice(0, 12);
+            nextBatch.forEach(cv => {
+                cv.classList.remove('d-none');
+                cv.classList.add('fade-in');
+            });
+            
+            currentlyShowing += nextBatch.length;
+            showingCount.textContent = currentlyShowing;
+            
+            // Hide button if all CVs are shown
+            if (currentlyShowing >= totalCVs) {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+        
+        // Reset load more functionality when page loads (for filtered results)
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalCVs = {{ $cvs->count() }};
+            const showingCount = document.getElementById('showingCount');
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            
+            // Update the counter with actual filtered count
+            if (showingCount) {
+                showingCount.textContent = Math.min(12, totalCVs);
+            }
+            
+            // Hide load more button if 12 or fewer CVs
+            if (totalCVs <= 12 && loadMoreBtn) {
+                loadMoreBtn.style.display = 'none';
+            }
+        });
+        
+        // Add CSS for fade-in animation
+        const style = document.createElement('style');
+        style.textContent = `
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>

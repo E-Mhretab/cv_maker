@@ -183,7 +183,7 @@
                         <p class="mb-0 mt-2">Step 1: Choose a template for your CV</p>
                     </div>
                     <div class="card-body p-4">
-                        <form action="{{ route('cvs.create-form') }}" method="POST" id="templateForm">
+                        <form action="{{ route('guest.cvs.create-form') }}" method="POST" id="templateForm">
                             @csrf
                             <div class="row">
                                 <!-- Nathan Template -->

@@ -281,8 +281,8 @@
                     <i class="fas fa-graduation-cap me-2"></i>Education
                 </h3>
                 <div id="educationContainer">
-                    @if($cv->educations->count() > 0)
-                        @foreach($cv->educations as $index => $education)
+                    @if($cv->education->count() > 0)
+                        @foreach($cv->education as $index => $education)
                         <div class="dynamic-section education-entry">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -366,6 +366,76 @@
                 </div>
                 <button type="button" class="btn btn-add" onclick="addEducationEntry()">
                     <i class="fas fa-plus me-1"></i>Add Education
+                </button>
+            </div>
+
+            <!-- Skills -->
+            <div class="form-section">
+                <h3 class="section-header">
+                    <i class="fas fa-cogs me-2"></i>Skills
+                </h3>
+                <div id="skillsContainer">
+                    @if($cv->skills->count() > 0)
+                        @foreach($cv->skills as $index => $skill)
+                        <div class="dynamic-section skill-entry">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Skill Name</label>
+                                    <input type="text" class="form-control" name="skill_name[]" 
+                                           value="{{ old('skill_name.'.$index, $skill->skill_name) }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Description</label>
+                                    <input type="text" class="form-control" name="skill_description[]" 
+                                           value="{{ old('skill_description.'.$index, $skill->description) }}">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-remove btn-sm" onclick="removeSkillEntry(this)">
+                                <i class="fas fa-trash me-1"></i>Remove Entry
+                            </button>
+                        </div>
+                        @endforeach
+                    @endif
+                </div>
+                <button type="button" class="btn btn-add" onclick="addSkillEntry()">
+                    <i class="fas fa-plus me-1"></i>Add Skill
+                </button>
+            </div>
+
+            <!-- Languages -->
+            <div class="form-section">
+                <h3 class="section-header">
+                    <i class="fas fa-language me-2"></i>Languages
+                </h3>
+                <div id="languagesContainer">
+                    @if($cv->languages->count() > 0)
+                        @foreach($cv->languages as $index => $language)
+                        <div class="dynamic-section language-entry">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Language</label>
+                                    <input type="text" class="form-control" name="language_name[]" 
+                                           value="{{ old('language_name.'.$index, $language->language_name) }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Proficiency Level</label>
+                                    <select class="form-select" name="language_proficiency[]">
+                                        <option value="basic" {{ old('language_proficiency.'.$index, $language->proficiency) == 'basic' ? 'selected' : '' }}>Basic</option>
+                                        <option value="intermediate" {{ old('language_proficiency.'.$index, $language->proficiency) == 'intermediate' ? 'selected' : '' }}>Intermediate</option>
+                                        <option value="advanced" {{ old('language_proficiency.'.$index, $language->proficiency) == 'advanced' ? 'selected' : '' }}>Advanced</option>
+                                        <option value="native" {{ old('language_proficiency.'.$index, $language->proficiency) == 'native' ? 'selected' : '' }}>Native</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-remove btn-sm" onclick="removeLanguageEntry(this)">
+                                <i class="fas fa-trash me-1"></i>Remove Entry
+                            </button>
+                        </div>
+                        @endforeach
+                    @endif
+                </div>
+                <button type="button" class="btn btn-add" onclick="addLanguageEntry()">
+                    <i class="fas fa-plus me-1"></i>Add Language
                 </button>
             </div>
 
@@ -462,6 +532,39 @@
             const container = document.getElementById('educationContainer');
             if (container.children.length > 1) {
                 button.closest('.education-entry').remove();
+            }
+        }
+
+        // Skills Functions
+        function addSkillEntry() {
+            const container = document.getElementById('skillsContainer');
+            const newEntry = container.querySelector('.skill-entry').cloneNode(true);
+            newEntry.querySelectorAll('input').forEach(input => input.value = '');
+            container.appendChild(newEntry);
+        }
+
+        function removeSkillEntry(button) {
+            const container = document.getElementById('skillsContainer');
+            if (container.children.length > 1) {
+                button.closest('.skill-entry').remove();
+            }
+        }
+
+        // Languages Functions
+        function addLanguageEntry() {
+            const container = document.getElementById('languagesContainer');
+            const newEntry = container.querySelector('.language-entry').cloneNode(true);
+            newEntry.querySelectorAll('input, select').forEach(input => {
+                if (input.type === 'text') input.value = '';
+                if (input.tagName === 'SELECT') input.selectedIndex = 0;
+            });
+            container.appendChild(newEntry);
+        }
+
+        function removeLanguageEntry(button) {
+            const container = document.getElementById('languagesContainer');
+            if (container.children.length > 1) {
+                button.closest('.language-entry').remove();
             }
         }
 
