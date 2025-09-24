@@ -42,17 +42,30 @@
                                 {{ htmlspecialchars($userContext['user']->username) }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ url('user_profile') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
-                                <li><a class="dropdown-item" href="{{ url('manage/cv_list') }}"><i class="fas fa-list me-2"></i>My CVs</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.profile') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                                <li><a class="dropdown-item" href="{{ url('manage/cvs') }}"><i class="fas fa-list me-2"></i>My CVs</a></li>
                                 <li><a class="dropdown-item" href="{{ route('manage.cvs.create') }}"><i class="fas fa-plus me-2"></i>Create CV</a></li>
-                                <li><a class="dropdown-item" href="{{ url('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
                             </ul>
                         </li>
                     @else
                         <li class="nav-item">
-                            <a href="{{ url('login') }}" class="btn btn-primary-custom">
-                                <i class="fas fa-sign-in-alt me-2"></i>Login
-                            </a>
+                            @auth
+                                <a href="{{ url('manage/cvs') }}" class="btn btn-primary-custom">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                            @else
+                                <a href="{{ url('login') }}" class="btn btn-primary-custom">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                            @endauth
                         </li>
                     @endif
                 </ul>
@@ -74,7 +87,7 @@
                                 <i class="fas fa-plus"></i>Create Free CV
                             </a>
                             @if ($userContext['is_logged_in'])
-                                <a href="{{ url('manage/cv_list') }}" class="btn-hero btn-hero-secondary">
+                                <a href="{{ url('manage/cvs') }}" class="btn-hero btn-hero-secondary">
                                     <i class="fas fa-cogs"></i>Manage CVs
                                 </a>
                             @endif
@@ -255,9 +268,15 @@
                     <a href="{{ route('manage.cvs.create') }}" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-plus me-1"></i>Create CV
                     </a>
-                    <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-sign-in-alt me-1"></i>Login
-                    </a>
+                    @if ($userContext['is_logged_in'])
+                        <a href="{{ url('manage/cvs') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    @endif
                 </div>
 
                 </div>

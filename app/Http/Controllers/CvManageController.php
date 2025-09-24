@@ -223,7 +223,7 @@ class CvManageController extends Controller
 
             DB::commit();
 
-            return redirect()->route('manage.cvs.index')->with('message', 'CV creado exitosamente!')->with('type', 'success');
+            return redirect()->route('manage.cvs.show', ['id' => $cv->id])->with('message', 'CV creado exitosamente!')->with('type', 'success');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('message', 'Error creando CV: ' . $e->getMessage())->with('type', 'error')->withInput();
@@ -232,9 +232,9 @@ class CvManageController extends Controller
 
     public function show($id)
     {
-        $cv = Cv::with(['metadata'])->findOrFail($id);
+    $cv = Cv::with(['metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies'])->findOrFail($id);
 
-        return view('manage.cv_view', compact('cv'));
+    return view('manage.cv_view', compact('cv'));
     }
 
     // Aquí irán los otros métodos para los demás PHP de manage (edit, update, etc.)

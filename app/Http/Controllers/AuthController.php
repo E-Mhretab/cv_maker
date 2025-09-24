@@ -71,4 +71,15 @@ class AuthController extends Controller
         Auth::logout();
         return redirect('/')->with('message', 'logged_out');
     }
+    public function profile()
+    {
+        $user = Auth::user();
+        // Obtener los CVs del usuario
+        $cvs = \App\Models\Cv::leftJoin('cv_metadata as m', 'cv.id', '=', 'm.cv_id')
+            ->select('cv.*', 'm.created_at', 'm.template_type', 'm.is_public', 'm.published_at')
+            ->where('cv.user_id', $user->id)
+            ->orderByDesc('m.created_at')
+            ->get();
+        return view('user_profile', compact('user', 'cvs'));
+    }
 }
