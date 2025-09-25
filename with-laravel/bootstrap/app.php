@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'device.fingerprint' => \App\Http\Middleware\DeviceFingerprintMiddleware::class,
+        ]);
+        
+        // Add device fingerprinting to web middleware group
+        $middleware->web(append: [
+            \App\Http\Middleware\DeviceFingerprintMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

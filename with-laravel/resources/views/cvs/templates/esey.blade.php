@@ -9,8 +9,75 @@ use Illuminate\Support\Facades\Auth;
   <title>CV - {{ $cv->name }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Print styles */
+    @media print {
+      .navbar, .position-absolute, .d-flex.flex-column {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .container {
+        max-width: none !important;
+        padding: 0 !important;
+      }
+      .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        margin-bottom: 15px !important;
+      }
+      .card-header {
+        background: #f8f9fa !important;
+        border-bottom: 1px solid #ddd !important;
+      }
+      .bg-primary {
+        background: #007bff !important;
+      }
+      .text-primary {
+        color: #007bff !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .no-break {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+  
+  @if(isset($print_mode) && $print_mode)
+  <script>
+    // Try immediate print
+    setTimeout(function() {
+      window.print();
+    }, 100);
+    
+    // Also try on window load as fallback
+    window.onload = function() {
+      window.print();
+    }
+    
+    // Redirect back to normal CV view after print dialog is closed
+    window.addEventListener('afterprint', function() {
+      // Redirect to the normal CV view
+      window.location.href = '{{ route("cvs.show", $cv->id) }}';
+    });
+    
+    // Also redirect if user navigates away or closes the tab
+    window.addEventListener('beforeunload', function() {
+      // This will trigger when user tries to navigate away
+    });
+  </script>
+  @endif
 </head>
 <body class="bg-light">
+
+@if(isset($print_mode) && $print_mode)
+<!-- Print mode is active - automatic print will trigger -->
+@endif
 
 <nav class="navbar navbar-dark bg-primary shadow-sm">
   <div class="container">
@@ -50,7 +117,7 @@ use Illuminate\Support\Facades\Auth;
       <div class="d-flex flex-column gap-1">
         @if(Auth::check() && (Auth::id() == $cv->user_id || Auth::user()->role === 'admin'))
           <!-- Authenticated user - show actual export links -->
-          <a href="{{ route('cvs.pdf', $cv->id) }}" class="btn btn-sm" style="background-color: #87CEEB; color: #000; border: none;" target="_blank">
+          <a href="print-cv-working.php?id={{ $cv->id }}" class="btn btn-sm" style="background-color: #87CEEB; color: #000; border: none;" target="_blank">
             <i class="fas fa-print me-1"></i>Print
           </a>
           <a href="{{ route('cvs.pdf', $cv->id) }}" class="btn btn-sm" style="background-color: #DC3545; color: #fff; border: none;" target="_blank">

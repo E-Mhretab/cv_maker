@@ -40,6 +40,11 @@
         <!-- Custom JS -->
         <script src="{{ asset('js/app.js') }}"></script>
         
+        <!-- Device Fingerprinting -->
+        @auth
+        <script src="{{ asset('js/device-fingerprint.js') }}"></script>
+        @endauth
+        
         @stack('scripts')
     </body>
 </html>

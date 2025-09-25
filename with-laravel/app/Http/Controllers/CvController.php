@@ -839,6 +839,34 @@ class CvController extends Controller
     }
 
     /**
+     * Print CV (print-optimized view)
+     */
+    public function print(Cv $cv)
+    {
+        // Check if user is admin or CV owner
+        if (Auth::user()->role !== 'admin' && $cv->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $cv->load(['user', 'metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies']);
+        
+        // Get template type from metadata
+        $templateType = $cv->metadata->template_type ?? 1;
+        
+        // Choose template based on template type
+        switch ($templateType) {
+            case 1: // Esey Template
+                return view('cvs.templates.esey', compact('cv'))->with('print_mode', true);
+            case 2: // Nathan Template  
+                return view('cvs.templates.nathan', compact('cv'))->with('print_mode', true);
+            case 3: // Mirian Template
+                return view('cvs.templates.mirian', compact('cv'))->with('print_mode', true);
+            default:
+                return view('cvs.templates.esey', compact('cv'))->with('print_mode', true);
+        }
+    }
+
+    /**
      * Publish or unpublish a CV.
      */
     public function publish(Request $request, Cv $cv)

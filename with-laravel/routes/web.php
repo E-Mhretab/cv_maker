@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     // PDF Export routes
     Route::get('/cvs/{cv}/pdf', [ResumePdfController::class, 'download'])->name('cvs.pdf');
     Route::get('/cvs/{cv}/pdf/stream', [ResumePdfController::class, 'stream'])->name('cvs.pdf.stream');
+    Route::get('/cvs/{cv}/print', [CvController::class, 'print'])->name('cvs.print');
 });
 
 // Resource routes for Users
@@ -70,7 +71,37 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/audit', [AdminController::class, 'audit'])->name('audit');
     Route::get('/sessions', [AdminController::class, 'sessions'])->name('sessions');
+    Route::delete('/sessions/{sessionId}', [AdminController::class, 'terminateSession'])->name('sessions.terminate');
+    Route::delete('/sessions/user/{userId}/all', [AdminController::class, 'terminateAllSessions'])->name('sessions.terminate-all');
+    Route::delete('/sessions/expired', [AdminController::class, 'terminateExpiredSessions'])->name('sessions.terminate-expired');
 });
+
+// Device fingerprinting API
+Route::post('/api/device-fingerprint', function (Request $request) {
+    if (auth()->check()) {
+        $sessionId = session()->getId();
+        $userId = auth()->id();
+        
+        // Generate enhanced device ID with JavaScript data
+        $deviceId = \App\Services\DeviceFingerprintService::generateEnhancedDeviceId($request);
+        
+        // Update session with enhanced device information
+        \App\Models\UserSession::updateOrCreate(
+            ['id' => $sessionId],
+            [
+                'user_id' => $userId,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->header('User-Agent', ''),
+                'device_id' => $deviceId,
+                'last_activity' => now(),
+                'expires_at' => now()->addMinutes(config('session.lifetime', 120)),
+                'refresh_token' => null,
+            ]
+        );
+    }
+    
+    return response()->json(['status' => 'success']);
+})->middleware('auth');
 
 // Legacy URL redirects (301 Permanent Redirects)
 // Main pages

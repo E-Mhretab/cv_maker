@@ -1,11 +1,10 @@
-RewriteEngine On
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect all requests to public directory
+    RewriteCond %{REQUEST_URI} !^/Esey_laravel/with-laravel/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
 
-# Redirect to public directory
-RewriteCond %{REQUEST_URI} !^/Esey_laravel/cv_maker-Esey/with-laravel/public/
-RewriteCond %{REQUEST_URI} ^/Esey_laravel/cv_maker-Esey/with-laravel/
-RewriteRule ^(.*)$ /Esey_laravel/cv_maker-Esey/with-laravel/public/$1 [L,R=301]
-
-# Laravel public directory rules
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
+# Disable directory browsing
+Options -Indexes
