@@ -12,32 +12,40 @@ use App\Models\Language;
 use App\Models\Hobby;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CvManageController extends Controller
 {
     public function index(Request $request)
     {
-        // Obtener contexto de usuario (adaptado de middleware)
-        $userContext = Auth::check() ? [
-            'is_logged_in' => true,
-            'user' => Auth::user(),
-            'is_admin' => Auth::user()->is_admin ?? false,
-            'role' => Auth::user()->role ?? 'user'  // Asume un campo 'role' en users
-        ] : [
-            'is_logged_in' => false,
-            'is_admin' => false
+        // Obtener contexto de usuario
+        $user = Auth::user();
+        $userContext = [
+            'is_logged_in' => (bool) $user,
+            'user'         => $user,
+            'role'         => $user->role ?? 'user',
+            'is_admin'     => $user->is_admin ?? false,
         ];
 
-        // Get search and filter parameters
+        // Obtener parámetros de búsqueda y filtro
         $search = $request->input('search', '');
         $templateFilter = $request->input('template', '');
 
-        // Build query with filters and user restrictions
+        // Construir la consulta base
         $query = Cv::leftJoin('cv_metadata as m', 'cv.id', '=', 'm.cv_id')
-            ->select('cv.id', 'cv.name', 'cv.profile_summary', 'cv.user_id', 'cv.email', 
-                     'm.created_at', 'm.template_type', 'm.is_public', 'm.published_at');
+            ->select(
+                'cv.id',
+                'cv.name',
+                'cv.profile_summary',
+                'cv.user_id',
+                'cv.email',
+                'm.created_at',
+                'm.template_type',
+                'm.is_public',
+                'm.published_at'
+            );
 
-        // Add user restriction (unless admin)
+        // Filtro de usuario (solo si NO es admin)
         if (!$userContext['is_admin']) {
             if ($userContext['is_logged_in']) {
                 $query->where(function ($q) use ($userContext) {
@@ -52,24 +60,32 @@ class CvManageController extends Controller
             }
         }
 
+        // Filtro de búsqueda
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('cv.name', 'LIKE', "%$search%")
-                  ->orWhere('cv.profile_summary', 'LIKE', "%$search%");
+                  ->orWhere('cv.profile_summary', 'LIKE', "%$search%") ;
             });
         }
 
+        // Filtro por plantilla
         if (!empty($templateFilter)) {
             $query->where('m.template_type', $templateFilter);
         }
 
+        // Orden y paginación
         $query->orderByDesc('m.created_at')
               ->orderByDesc('cv.id');
 
-        $cvs = $query->paginate(12);  // Paginación: 12 por página, ajusta si necesitas
+        $cvs = $query->paginate(12)->withQueryString();
 
         // Pasar datos a la vista
-        return view('manage.cv_list', compact('cvs', 'userContext', 'search', 'templateFilter'));
+        return view('manage.cv_list', [
+            'cvs' => $cvs,
+            'userContext' => $userContext,
+            'search' => $search,
+            'templateFilter' => $templateFilter,
+        ]);
     }
 
     public function create()
@@ -82,9 +98,7 @@ class CvManageController extends Controller
         $request->validate([
             'template_type' => 'required|in:nathan,esey',
         ]);
-
         $templateType = $request->template_type;
-
         return view('manage.cv_create_form', compact('templateType'));
     }
 
@@ -232,10 +246,78 @@ class CvManageController extends Controller
 
     public function show($id)
     {
-    $cv = Cv::with(['metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies'])->findOrFail($id);
-
-    return view('manage.cv_view', compact('cv'));
+        $cv = Cv::with(['metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies'])->findOrFail($id);
+        return view('manage.cv_view', compact('cv'));
     }
 
-    // Aquí irán los otros métodos para los demás PHP de manage (edit, update, etc.)
+    // Método para renderizar templates (público para previews)
+    public function renderCVTemplate($id)
+    {
+        $cv = Cv::with('metadata')->findOrFail($id)->toArray();
+        $workExperiences = WorkExperience::where('cv_id', $id)->get()->toArray();
+        $education = Education::where('cv_id', $id)->get()->toArray();
+        $hobbies = Hobby::where('cv_id', $id)->get()->toArray();
+        $skills = Skill::where('cv_id', $id)->get()->toArray();
+        $languages = Language::where('cv_id', $id)->get()->toArray();
+
+        $templateType = $this->getTemplateType($cv);
+        $allowedTemplates = ['nathan', 'esey', 'mirian'];
+        if (!in_array($templateType, $allowedTemplates)) {
+            $templateType = 'nathan';
+        }
+        $templateView = "templates.template_{$templateType}";
+        if (!view()->exists($templateView)) {
+            $templateView = 'templates.template_nathan';
+            if (!view()->exists($templateView)) {
+                abort(404, "Template file not found: {$templateView}");
+            }
+        }
+        return view($templateView, [
+            'cv' => $cv,
+            'workExperiences' => $workExperiences,
+            'education' => $education,
+            'hobbies' => $hobbies,
+            'skills' => $skills,
+            'languages' => $languages,
+        ]);
+    }
+
+    protected function getTemplateType($cv)
+    {
+        if (isset($cv['template_type'])) {
+            if (is_numeric($cv['template_type'])) {
+                return getTemplateName($cv['template_type']);
+            }
+            return $cv['template_type'];
+        }
+        return 'nathan';
+    }
+
+    // Método para exportar PDF (protegido)
+    public function exportPdf($id)
+    {
+        $cv = Cv::with(['metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies'])->findOrFail($id);
+        $templateType = $this->getTemplateType($cv);
+        $pdfView = "templates.template_{$templateType}_pdf";
+        if (!view()->exists($pdfView)) {
+            abort(404, "PDF template not found");
+        }
+        $pdf = Pdf::loadView($pdfView, compact('cv'));
+        return $pdf->download("cv_{$id}.pdf");
+    }
+
+    // Método para exportar XML (protegido)
+    public function exportXml($id)
+    {
+        $cv = Cv::with(['metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies'])->findOrFail($id);
+        $xml = new \SimpleXMLElement('<cv/>');
+        $xml->addChild('name', $cv->name);
+        $xml->addChild('email', $cv->email);
+        // Agrega más campos y secciones (work, education, etc.) como XML
+        return response($xml->asXML(), 200)
+            ->header('Content-Type', 'application/xml')
+            ->header('Content-Disposition', "attachment; filename=cv_{$id}.xml");
+    }
+    // Aquí irán los otros métodos para edit, update, etc.
 }
+

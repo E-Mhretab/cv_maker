@@ -146,7 +146,7 @@
         <!-- CV List -->
         <div class="row">
 
-            @if ($cvs->isEmpty())
+            @if ($cvs->count() === 0)
                 <div class="col-12">
                     <div class="alert alert-info text-center">
                         <i class="fas fa-info-circle fa-2x mb-3"></i>

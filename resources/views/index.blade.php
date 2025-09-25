@@ -42,7 +42,18 @@
                                 {{ htmlspecialchars($userContext['user']->username) }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('user.profile') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                                <li>
+                                    @if (($userContext['role'] ?? 'user') === 'admin')
+                                        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                            <i class="fas fa-user me-2"></i>My Profile
+                                        </a>
+                                    @else
+                                        <a class="dropdown-item" href="{{ route('user.profile') }}">
+                                            <i class="fas fa-user me-2"></i>My Profile
+                                        </a>
+                                    @endif
+                                </li>
+
                                 <li><a class="dropdown-item" href="{{ url('manage/cvs') }}"><i class="fas fa-list me-2"></i>My CVs</a></li>
                                 <li><a class="dropdown-item" href="{{ route('manage.cvs.create') }}"><i class="fas fa-plus me-2"></i>Create CV</a></li>
                                 <li>
@@ -81,6 +92,7 @@
                     <div class="hero-content fade-in-up">
                         <h1 class="hero-title">Create Professional CVs in Minutes</h1>
                         <p class="hero-subtitle">Build stunning, ATS-friendly CVs with our easy-to-use builder. Choose from professional templates and land your dream job faster.</p>
+
 
                         <div class="btn-group-custom">
                             <a href="{{ route('manage.cvs.create') }}" class="btn-hero btn-hero-primary">
@@ -264,20 +276,20 @@
                 </div>
                 <div class="col-lg-2 col-md-6">
                     <h6 class="fw-bold mb-3">Get Started</h6>
-                <div class="d-grid gap-2">
-                    <a href="{{ route('manage.cvs.create') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-plus me-1"></i>Create CV
-                    </a>
-                    @if ($userContext['is_logged_in'])
-                        <a href="{{ url('manage/cvs') }}" class="btn btn-outline-light btn-sm">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('manage.cvs.create') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-plus me-1"></i>Create CV
                         </a>
-                    @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">
-                            <i class="fas fa-sign-in-alt me-1"></i>Login
-                        </a>
-                    @endif
-                </div>
+                        @if ($userContext['is_logged_in'])
+                            <a href="{{ url('manage/cvs') }}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        @endif
+                    </div>
 
                 </div>
             </div>

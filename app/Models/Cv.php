@@ -37,4 +37,5 @@ class Cv extends Model
     {
         return $this->hasMany(\App\Models\Hobby::class, 'cv_id');
     }
+    
 }
