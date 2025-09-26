@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Services\AuditLogger; // Agregado para logging
 
 class AuthController extends Controller
 {
@@ -22,14 +23,15 @@ class AuthController extends Controller
         ]);
 
         $credentials = [
-            'username' => $request->username,  // Asume auth por username
+            'username' => $request->username,
             'password' => $request->password,
         ];
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
-            // Log successful login (migra tu AuditLogger aquí si quieres)
+            // Log successful login
+            AuditLogger::logAuth('LOGIN', $user->id);
 
             // Redirigir basado en role
             if ($user->role === 'admin') {
@@ -49,7 +51,7 @@ class AuthController extends Controller
         $request->validate([
             'reg_username' => 'required|string|min:3|max:50|unique:users,username',
             'reg_email' => 'required|email|unique:users,email',
-            'reg_password' => 'required|min:6|confirmed',  // Confirma contra reg_password_confirmation
+            'reg_password' => 'required|min:6|confirmed',
         ]);
 
         $user = User::create([
@@ -68,18 +70,26 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $userId = Auth::id();
+
         Auth::logout();
+
+        // Log logout
+        AuditLogger::logAuth('LOGOUT', $userId);
+
         return redirect('/')->with('message', 'logged_out');
     }
+
     public function profile()
     {
         $user = Auth::user();
-        // Obtener los CVs del usuario
+
         $cvs = \App\Models\Cv::leftJoin('cv_metadata as m', 'cv.id', '=', 'm.cv_id')
             ->select('cv.*', 'm.created_at', 'm.template_type', 'm.is_public', 'm.published_at')
             ->where('cv.user_id', $user->id)
             ->orderByDesc('m.created_at')
             ->get();
+
         return view('user_profile', compact('user', 'cvs'));
     }
 }

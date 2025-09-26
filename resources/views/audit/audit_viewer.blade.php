@@ -41,17 +41,18 @@
                 <div>
                     <span class="badge bg-primary">Total: {{ $logs->total() }}</span>
                     <span class="badge bg-info">Found: {{ $logs->count() }}</span>
-                    @if(request('debug'))
+                    @if(isset($debugQuery))
                         <span class="badge bg-warning">Debug Mode</span>
                     @endif
                 </div>
             </div>
 
-            @if(request('debug'))
+            @if(isset($debugQuery))
             <div class="alert alert-info">
                 <h5>Debug Information:</h5>
-                <p><strong>Query:</strong> {{ $logs->toSql() ?? '' }}</p>
-                <p><strong>Parameters:</strong> {{ json_encode(request()->all()) }}</p>
+                <p><strong>Query:</strong> {!! $debugQuery !!}</p>
+                <p><strong>Parameters:</strong> {!! $debugBindings ?? '' !!}</p>  <!-- Aquí va la línea que preguntabas -->
+                <p><strong>Where Clause:</strong> {!! $debugWhere ?? '' !!}</p>
                 <p><strong>Total Records:</strong> {{ $logs->total() }}</p>
                 <p><strong>Current Page:</strong> {{ $logs->currentPage() }}</p>
                 <p><strong>Per Page:</strong> {{ $logs->perPage() }}</p>
@@ -160,7 +161,7 @@
                                             <td>{{ $log->created_at }}</td>
                                             <td>{{ $log->ip_address }}</td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-primary" onclick="showDetails({{ htmlspecialchars(json_encode([
+                                                <button class="btn btn-sm btn-outline-primary" onclick="showDetails({{ json_encode([
                                                     'id' => $log->id,
                                                     'username' => $log->user->username ?? 'Unknown',
                                                     'action' => $log->action,
@@ -170,7 +171,7 @@
                                                     'ip_address' => $log->ip_address,
                                                     'old_values' => $log->old_values,
                                                     'new_values' => $log->new_values,
-                                                ]), ENT_QUOTES, 'UTF-8') }})">
+                                                ], JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE) }})">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                             </td>
@@ -198,6 +199,7 @@
     </div>
 </div>
 
+
 <!-- Details Modal -->
 <div class="modal fade" id="detailsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -212,6 +214,7 @@
         </div>
     </div>
 </div>
+
 
 <script>
 function showDetails(log) {
@@ -242,4 +245,6 @@ function showDetails(log) {
     new bootstrap.Modal(document.getElementById('detailsModal')).show();
 }
 </script>
+
+
 @endsection

@@ -18,25 +18,31 @@ class AuditLogger
             'new_values' => $newValues ? json_encode($newValues) : null,
             'ip_address' => Request::ip(),
             'user_agent' => Request::header('User-Agent'),
-            'created_at' => now(),
+            'timestamp'  => now(),  // Cambiado de 'created_at' a 'timestamp' para coincidir con tu tabla
         ]);
     }
+
     // Métodos de conveniencia
     public static function logCV($action, $cvId, $userId, $oldData = null, $newData = null) {
         return self::log($userId, $action, 'cv', $cvId, $oldData, $newData);
     }
+
     public static function logEducation($action, $educationId, $userId, $oldData = null, $newData = null) {
         return self::log($userId, $action, 'education', $educationId, $oldData, $newData);
     }
+
     public static function logWorkExperience($action, $workId, $userId, $oldData = null, $newData = null) {
         return self::log($userId, $action, 'work_experience', $workId, $oldData, $newData);
     }
+
     public static function logSkills($action, $skillId, $userId, $oldData = null, $newData = null) {
         return self::log($userId, $action, 'skills', $skillId, $oldData, $newData);
     }
+
     public static function logLanguages($action, $languageId, $userId, $oldData = null, $newData = null) {
         return self::log($userId, $action, 'languages', $languageId, $oldData, $newData);
     }
+
     public static function logAuth($action, $userId, $additionalData = null) {
         return self::log($userId, $action, 'users', $userId, null, $additionalData);
     }

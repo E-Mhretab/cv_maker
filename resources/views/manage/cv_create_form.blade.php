@@ -37,8 +37,10 @@
                     </div>
                     <div class="card-body p-0">
                         <form action="{{ route('manage.cvs.store') }}" method="POST" id="cvForm">
-                            @csrf
-                            <input type="hidden" name="template_type" value="{{ $templateType }}">
+
+    @csrf
+    <input type="hidden" name="template_type" value="{{ $templateType }}">
+
                             
                             <!-- Personal Information -->
                             <div class="form-section">

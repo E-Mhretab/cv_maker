@@ -131,7 +131,7 @@
                                 </a>
                             </div>
                             <div class="col-md-3 mb-2">
-                                <a href="{{ url('audit/debug_audit') }}" class="btn btn-outline-info w-100">
+                                <a href="{{ route('audit.debug') }}" class="btn btn-outline-info w-100">
                                     <i class="fas fa-bug me-2"></i>Debug Audit
                                 </a>
                             </div>
