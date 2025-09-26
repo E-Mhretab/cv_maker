@@ -248,7 +248,7 @@ use Illuminate\Support\Facades\Auth;
           <div class="d-flex flex-column gap-1">
             @if(Auth::check() && (Auth::id() == $cv->user_id || Auth::user()->role === 'admin'))
               <!-- Authenticated user - show actual export links -->
-              <a href="print-cv-working.php?id={{ $cv->id }}" class="btn btn-sm" style="background-color: #87CEEB; color: #000; border: none;" target="_blank">
+              <a href="{{ route('cvs.print', $cv->id) }}" class="btn btn-sm" style="background-color: #87CEEB; color: #000; border: none;" target="_blank">
                 <i class="fas fa-print me-1"></i>Print
               </a>
               <a href="{{ route('cvs.pdf', $cv->id) }}" class="btn btn-sm" style="background-color: #DC3545; color: #fff; border: none;" target="_blank">
