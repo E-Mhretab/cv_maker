@@ -395,6 +395,23 @@
                             </button>
                         </div>
                         @endforeach
+                    @else
+                        <!-- Empty skill entry for adding new skills -->
+                        <div class="dynamic-section skill-entry">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Skill Name</label>
+                                    <input type="text" class="form-control" name="skill_name[]" placeholder="e.g., JavaScript, Project Management">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Description</label>
+                                    <input type="text" class="form-control" name="skill_description[]" placeholder="Optional description">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-remove btn-sm" onclick="removeSkillEntry(this)">
+                                <i class="fas fa-trash me-1"></i>Remove Entry
+                            </button>
+                        </div>
                     @endif
                 </div>
                 <button type="button" class="btn btn-add" onclick="addSkillEntry()">
@@ -421,8 +438,8 @@
                                     <label class="form-label">Proficiency Level</label>
                                     <select class="form-select" name="language_proficiency[]">
                                         <option value="basic" {{ old('language_proficiency.'.$index, $language->proficiency) == 'basic' ? 'selected' : '' }}>Basic</option>
-                                        <option value="intermediate" {{ old('language_proficiency.'.$index, $language->proficiency) == 'intermediate' ? 'selected' : '' }}>Intermediate</option>
-                                        <option value="advanced" {{ old('language_proficiency.'.$index, $language->proficiency) == 'advanced' ? 'selected' : '' }}>Advanced</option>
+                                        <option value="conversational" {{ old('language_proficiency.'.$index, $language->proficiency) == 'conversational' ? 'selected' : '' }}>Conversational</option>
+                                        <option value="fluent" {{ old('language_proficiency.'.$index, $language->proficiency) == 'fluent' ? 'selected' : '' }}>Fluent</option>
                                         <option value="native" {{ old('language_proficiency.'.$index, $language->proficiency) == 'native' ? 'selected' : '' }}>Native</option>
                                     </select>
                                 </div>
@@ -432,6 +449,28 @@
                             </button>
                         </div>
                         @endforeach
+                    @else
+                        <!-- Empty language entry for adding new languages -->
+                        <div class="dynamic-section language-entry">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Language</label>
+                                    <input type="text" class="form-control" name="language_name[]" placeholder="e.g., English, Spanish, French">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Proficiency Level</label>
+                                    <select class="form-select" name="language_proficiency[]">
+                                        <option value="basic">Basic</option>
+                                        <option value="conversational">Conversational</option>
+                                        <option value="fluent">Fluent</option>
+                                        <option value="native">Native</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-remove btn-sm" onclick="removeLanguageEntry(this)">
+                                <i class="fas fa-trash me-1"></i>Remove Entry
+                            </button>
+                        </div>
                     @endif
                 </div>
                 <button type="button" class="btn btn-add" onclick="addLanguageEntry()">
@@ -538,8 +577,32 @@
         // Skills Functions
         function addSkillEntry() {
             const container = document.getElementById('skillsContainer');
-            const newEntry = container.querySelector('.skill-entry').cloneNode(true);
-            newEntry.querySelectorAll('input').forEach(input => input.value = '');
+            let newEntry;
+            
+            // If there are existing entries, clone one
+            if (container.querySelector('.skill-entry')) {
+                newEntry = container.querySelector('.skill-entry').cloneNode(true);
+                newEntry.querySelectorAll('input').forEach(input => input.value = '');
+            } else {
+                // Create new entry from scratch
+                newEntry = document.createElement('div');
+                newEntry.className = 'dynamic-section skill-entry';
+                newEntry.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Skill Name</label>
+                            <input type="text" class="form-control" name="skill_name[]" placeholder="e.g., JavaScript, Project Management">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" name="skill_description[]" placeholder="Optional description">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-remove btn-sm" onclick="removeSkillEntry(this)">
+                        <i class="fas fa-trash me-1"></i>Remove Entry
+                    </button>
+                `;
+            }
             container.appendChild(newEntry);
         }
 
@@ -553,11 +616,40 @@
         // Languages Functions
         function addLanguageEntry() {
             const container = document.getElementById('languagesContainer');
-            const newEntry = container.querySelector('.language-entry').cloneNode(true);
-            newEntry.querySelectorAll('input, select').forEach(input => {
-                if (input.type === 'text') input.value = '';
-                if (input.tagName === 'SELECT') input.selectedIndex = 0;
-            });
+            let newEntry;
+            
+            // If there are existing entries, clone one
+            if (container.querySelector('.language-entry')) {
+                newEntry = container.querySelector('.language-entry').cloneNode(true);
+                newEntry.querySelectorAll('input, select').forEach(input => {
+                    if (input.type === 'text') input.value = '';
+                    if (input.tagName === 'SELECT') input.selectedIndex = 0;
+                });
+            } else {
+                // Create new entry from scratch
+                newEntry = document.createElement('div');
+                newEntry.className = 'dynamic-section language-entry';
+                newEntry.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Language</label>
+                            <input type="text" class="form-control" name="language_name[]" placeholder="e.g., English, Spanish, French">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Proficiency Level</label>
+                            <select class="form-select" name="language_proficiency[]">
+                                <option value="basic">Basic</option>
+                                <option value="conversational">Conversational</option>
+                                <option value="fluent">Fluent</option>
+                                <option value="native">Native</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-remove btn-sm" onclick="removeLanguageEntry(this)">
+                        <i class="fas fa-trash me-1"></i>Remove Entry
+                    </button>
+                `;
+            }
             container.appendChild(newEntry);
         }
 
