@@ -37,12 +37,17 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
-                                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                                    {{ strtoupper(substr(auth()->user()->username ?? auth()->user()->email, 0, 1)) }}
                                 </div>
-                                {{ auth()->user()->name }}
+                                {{ auth()->user()->username ?? auth()->user()->email }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                                @if(auth()->user()->isAdmin())
+                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-crown me-2"></i>Admin Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.cv-list') }}"><i class="fas fa-list me-2"></i>Manage All CVs</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.user-list') }}"><i class="fas fa-users me-2"></i>Manage Users</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                @endif
                                 <li><a class="dropdown-item" href="{{ route('cv.index') }}"><i class="fas fa-list me-2"></i>My CVs</a></li>
                                 <li><a class="dropdown-item" href="{{ route('cv.create') }}"><i class="fas fa-plus me-2"></i>Create CV</a></li>
                                 <li><hr class="dropdown-divider"></li>
@@ -83,7 +88,7 @@
                             </a>
                             @auth
                                 <a href="{{ route('cv.index') }}" class="btn-hero btn-hero-secondary">
-                                    <i class="fas fa-cogs"></i>Manage CVs
+                                    <i class="fas fa-list"></i>Manage CVs
                                 </a>
                             @else
                                 <a href="{{ route('login') }}" class="btn-hero btn-hero-secondary">
@@ -225,11 +230,9 @@
                         <a href="{{ route('cv.create') }}" class="btn btn-outline-light btn-sm">
                             <i class="fas fa-plus me-1"></i>Create CV
                         </a>
-                        @guest
-                            <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
-                            </a>
-                        @endguest
+                        <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
                     </div>
                 </div>
             </div>

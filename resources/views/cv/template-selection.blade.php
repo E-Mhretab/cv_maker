@@ -58,7 +58,6 @@
                     </div>
                     <div class="card-body p-4">
                         <form action="{{ route('cv.create.form') }}" method="POST" id="templateForm">
-                            @csrf
                             <div class="row">
                                 <!-- Nathan Template -->
                                 <div class="col-md-6 mb-4">

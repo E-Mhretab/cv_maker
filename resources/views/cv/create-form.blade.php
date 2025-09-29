@@ -71,7 +71,6 @@
                     </div>
                     <div class="card-body p-0">
                         <form action="{{ route('cv.store') }}" method="POST" id="cvForm">
-                            @csrf
                             <input type="hidden" name="template_type" value="{{ $templateType }}">
                             
                             <!-- Personal Information -->

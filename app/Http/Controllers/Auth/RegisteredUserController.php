@@ -24,27 +24,37 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9_]+$/', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', 'min:6'],
+        ], [
+            'username.regex' => 'Username can only contain letters, numbers, and underscores.',
+            'username.unique' => 'This username is already taken.',
+            'email.unique' => 'This email is already registered.',
         ]);
 
+        // Hash password using password_hash (like old PHP code)
+        $passwordHash = password_hash($request->password, PASSWORD_DEFAULT);
+
+        // Create user (exactly like old PHP code)
         $user = User::create([
-            'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password_hash' => $passwordHash,
+            'role' => 'user',
+            'is_active' => 1,
         ]);
 
-        event(new Registered($user));
-
+        // Auto-login after registration (like old PHP code)
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Update last login
+        $user->update(['last_login' => now()]);
+
+        return redirect()->route('home')->with('status', 'Registration successful! Welcome, ' . $user->username . '!');
     }
 }

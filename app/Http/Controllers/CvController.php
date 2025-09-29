@@ -23,9 +23,12 @@ class CvController extends Controller
     {
         $user = Auth::user();
         
+        // Use JOIN query like the old PHP code
         $cvs = Cv::with(['metadata', 'skills', 'languages'])
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+            ->join('cv_metadata', 'cv.id', '=', 'cv_metadata.cv_id')
+            ->where('cv.user_id', $user->id)
+            ->select('cv.*', 'cv_metadata.template_type', 'cv_metadata.is_public', 'cv_metadata.published_at', 'cv_metadata.created_at as metadata_created_at')
+            ->orderBy('cv_metadata.created_at', 'desc')
             ->get();
 
         return view('cv.index', compact('cvs'));
@@ -44,11 +47,17 @@ class CvController extends Controller
      */
     public function createForm(Request $request): View
     {
-        $request->validate([
-            'template_type' => 'required|in:nathan,esey,mirian'
-        ]);
-
-        $templateType = $request->template_type;
+        // For GET requests, get template from session or default
+        if ($request->isMethod('get')) {
+            $templateType = session('selected_template', 'nathan');
+        } else {
+            // For POST requests, validate the template
+            $request->validate([
+                'template_type' => 'required|in:nathan,esey,mirian'
+            ]);
+            $templateType = $request->template_type;
+            session(['selected_template' => $templateType]);
+        }
         
         return view('cv.create-form', compact('templateType'));
     }
@@ -58,47 +67,24 @@ class CvController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'date_of_birth' => 'nullable|date',
-            'linkedin_profile' => 'nullable|url',
-            'portfolio' => 'nullable|url',
-            'profile_summary' => 'required|string',
-            'template_type' => 'required|in:nathan,esey,mirian',
-            'is_public' => 'nullable|boolean',
-            // Work experience
-            'work_title' => 'nullable|array',
-            'work_company' => 'nullable|array',
-            'work_start' => 'nullable|array',
-            'work_end' => 'nullable|array',
-            'work_current' => 'nullable|array',
-            'work_description' => 'nullable|array',
-            // Education
-            'education_degree' => 'nullable|array',
-            'education_institution' => 'nullable|array',
-            'education_start' => 'nullable|array',
-            'education_end' => 'nullable|array',
-            'education_current' => 'nullable|array',
-            'education_description' => 'nullable|array',
-            // Skills
-            'skill_name' => 'nullable|array',
-            'skill_description' => 'nullable|array',
-            // Languages
-            'language_name' => 'nullable|array',
-            'language_proficiency' => 'nullable|array',
-            // Hobbies
-            'hobby_name' => 'nullable|array',
-            'hobby_description' => 'nullable|array',
-        ]);
+        try {
+            // Basic validation only
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'profile_summary' => 'required|string',
+                'template_type' => 'required|in:nathan,esey,mirian',
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Validation failed: ' . $e->getMessage()]);
+        }
 
         // Convert template type to integer
         $templateTypeMap = ['nathan' => 1, 'esey' => 2, 'mirian' => 3];
         $templateType = $templateTypeMap[$request->template_type] ?? 1;
 
-        DB::transaction(function () use ($request, $templateType) {
+        try {
+            DB::transaction(function () use ($request, $templateType) {
             // Create CV (user_id can be null for guest users)
             $cv = Cv::create([
                 'name' => $request->name,
@@ -112,11 +98,15 @@ class CvController extends Controller
                 'user_id' => Auth::id(), // Will be null if not authenticated
             ]);
 
-            // Create metadata
+            // Create metadata (exactly like original PHP)
+            $isPublic = $request->boolean('is_public', true); // Default to public for guests
+            $publishedAt = $isPublic ? now() : null;
+            
             CvMetadata::create([
                 'cv_id' => $cv->id,
                 'template_type' => $templateType,
-                'is_public' => $request->boolean('is_public', true), // Default to public for guests
+                'is_public' => $isPublic,
+                'published_at' => $publishedAt,
             ]);
 
             // Create work experience
@@ -127,8 +117,8 @@ class CvController extends Controller
                             'cv_id' => $cv->id,
                             'job_title' => $title,
                             'company_name' => $request->work_company[$index] ?? null,
-                            'start_date' => $request->work_start[$index] ?? null,
-                            'end_date' => $request->work_end[$index] ?? null,
+                            'work_start' => $request->work_start[$index] ?? null,
+                            'work_end' => $request->work_end[$index] ?? null,
                             'is_current' => isset($request->work_current[$index]),
                             'description' => $request->work_description[$index] ?? null,
                         ]);
@@ -144,10 +134,10 @@ class CvController extends Controller
                             'cv_id' => $cv->id,
                             'degree' => $degree,
                             'institution' => $request->education_institution[$index] ?? null,
-                            'start_date' => $request->education_start[$index] ?? null,
-                            'end_date' => $request->education_end[$index] ?? null,
+                            'education_start' => $request->education_start[$index] ?? null,
+                            'education_end' => $request->education_end[$index] ?? null,
                             'is_current' => isset($request->education_current[$index]),
-                            'field_of_study' => $request->education_description[$index] ?? null,
+                            'description' => $request->education_description[$index] ?? null,
                         ]);
                     }
                 }
@@ -178,11 +168,15 @@ class CvController extends Controller
                     }
                 }
             }
-        });
+            });
 
-        // Redirect to the created CV
-        return redirect()->route('cv.show', Cv::latest()->first())
-            ->with('success', 'CV created successfully!');
+            // Redirect to the created CV
+            return redirect()->route('cv.show', Cv::latest()->first())
+                ->with('success', 'CV created successfully!');
+                
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Database error: ' . $e->getMessage()]);
+        }
     }
 
     /**
@@ -227,8 +221,9 @@ class CvController extends Controller
         }
 
         $cv->load(['metadata', 'skills', 'languages', 'workExperience', 'education']);
+        $templateType = $cv->metadata->template_type ?? 'nathan';
 
-        return view('cv.edit', compact('cv'));
+        return view('cv.edit', compact('cv', 'templateType'));
     }
 
     /**

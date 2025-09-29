@@ -26,9 +26,31 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Get user before session regenerate
+        $user = Auth::user();
+        
+        // Regenerate session for security (like old PHP code)
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Update last login time (like old PHP code)
+        $user->update(['last_login' => now()]);
+
+        // Set session variables (like old PHP code)
+        $request->session()->put([
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->role,
+            'login_time' => time(),
+        ]);
+
+        // Redirect based on user role (like old PHP version)
+        $username = $user->username ?? $user->email ?? 'User';
+        if ($user->isAdmin()) {
+            return redirect()->intended(route('home', absolute: false))->with('status', 'Welcome back, ' . $username . '!');
+        } else {
+            return redirect()->intended(route('home', absolute: false))->with('status', 'Welcome back, ' . $username . '!');
+        }
     }
 
     /**
@@ -42,6 +64,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('home')->with('status', 'You have been successfully logged out.');
     }
 }
