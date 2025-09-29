@@ -366,6 +366,15 @@
             <a href="{{ route('cvs.download', $cv) }}" class="btn btn-success">
                 <i class="fas fa-file-code me-1"></i>Export XML
             </a>
+            <form method="POST" action="{{ route('cvs.send-email', $cv) }}" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-success" onclick="return confirm('Weet u zeker dat u uw CV naar uw e-mailadres wilt sturen?')">
+                    <i class="fas fa-envelope me-1"></i>Send to Me
+                </button>
+            </form>
+            <a href="{{ route('cvs.show', $cv) }}" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i>Send to Others
+            </a>
         @else
             <a href="{{ route('login') }}?redirect={{ urlencode(route('cvs.preview', $cv)) }}&message=export_required" class="btn btn-danger">
                 <i class="fas fa-file-pdf me-1"></i>Export PDF

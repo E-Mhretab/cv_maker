@@ -52,6 +52,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cv/{cv}/preview', [CvController::class, 'preview'])->name('cvs.preview');
     Route::get('/cv/{cv}/export', [CvController::class, 'export'])->name('cvs.export');
     Route::post('/cv/{cv}/publish', [CvController::class, 'publish'])->name('cvs.publish');
+    Route::post('/cv/{cv}/send-email', [CvController::class, 'sendEmail'])->name('cvs.send-email');
+    Route::post('/cv/{cv}/send-sendgrid', [CvController::class, 'sendViaSendGrid'])->name('cvs.send-sendgrid');
 
     // PDF Export routes
     Route::get('/cvs/{cv}/pdf', [ResumePdfController::class, 'download'])->name('cvs.pdf');

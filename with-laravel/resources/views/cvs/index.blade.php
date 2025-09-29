@@ -248,6 +248,16 @@
                                    class="btn btn-outline-warning btn-sm" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                <form method="POST" action="{{ route('cvs.send-email', $cv) }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-success btn-sm" title="Send to Me"
+                                            onclick="return confirm('Weet u zeker dat u uw CV naar uw e-mailadres wilt sturen?')">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                </form>
+                                <a href="{{ route('cvs.show', $cv) }}" class="btn btn-outline-primary btn-sm" title="Send to Others">
+                                    <i class="fas fa-paper-plane"></i>
+                                </a>
                                 @if($cv->metadata && $cv->metadata->is_public)
                                     <form method="POST" action="{{ route('cvs.publish', $cv) }}?action=unpublish" class="d-inline">
                                         @csrf

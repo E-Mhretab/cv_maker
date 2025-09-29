@@ -151,6 +151,15 @@
             <a href="{{ route('cvs.pdf', $cv->id) }}" class="btn btn-danger btn-sm">
                 <i class="fas fa-file-pdf me-1"></i>Export PDF
             </a>
+            <form action="{{ route('cvs.send-email', $cv->id) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Weet u zeker dat u uw CV naar uw e-mailadres wilt sturen?')">
+                    <i class="fas fa-envelope me-1"></i>Send to Me
+                </button>
+            </form>
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendGridModal">
+                <i class="fas fa-paper-plane me-1"></i>Send to Others
+            </button>
         </div>
     </div>
 </nav>
@@ -316,6 +325,45 @@
         </a>
     </div>
 </footer>
+
+<!-- SendGrid Modal -->
+<div class="modal fade" id="sendGridModal" tabindex="-1" aria-labelledby="sendGridModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendGridModalLabel">
+                    <i class="fas fa-paper-plane me-2"></i>Verstuur CV naar Anderen
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('cvs.send-sendgrid', $cv->id) }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="recipient_email" class="form-label">Ontvanger E-mailadres *</label>
+                        <input type="email" class="form-control" id="recipient_email" name="recipient_email" required>
+                        <div class="form-text">Het e-mailadres waar de CV naartoe gestuurd moet worden.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipient_name" class="form-label">Ontvanger Naam (optioneel)</label>
+                        <input type="text" class="form-control" id="recipient_name" name="recipient_name" placeholder="Bijv. HR Manager">
+                        <div class="form-text">De naam van de ontvanger voor persoonlijke begroeting.</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Let op:</strong> De CV wordt verzonden via SendGrid met PDF-bijlage van {{ $cv->name }} naar de opgegeven ontvanger.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Verstuur via SendGrid
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
