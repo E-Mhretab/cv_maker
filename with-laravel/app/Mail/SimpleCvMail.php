@@ -16,14 +16,16 @@ class SimpleCvMail extends Mailable
 
     public $cv;
     public $userName;
+    public $recipientEmail;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Cv $cv, string $userName)
+    public function __construct(Cv $cv, string $userName, string $recipientEmail = null)
     {
         $this->cv = $cv;
         $this->userName = $userName;
+        $this->recipientEmail = $recipientEmail ?? $cv->email;
     }
 
     /**
@@ -32,7 +34,16 @@ class SimpleCvMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Uw CV is klaar - ' . $this->cv->name,
+            subject: 'CV Document - ' . $this->cv->name . ' | Business Development',
+            from: new \Illuminate\Mail\Mailables\Address(env('MAIL_FROM_ADDRESS', 'web@luxdemoestate.com'), env('MAIL_FROM_NAME', 'LuxDemo Estate')),
+            tags: ['cv-document', 'business-development', 'professional'],
+            metadata: [
+                'cv_id' => $this->cv->id,
+                'template' => 'cv-document',
+                'type' => 'document-delivery',
+                'priority' => 'normal',
+                'category' => 'business',
+            ],
         );
     }
 
@@ -46,6 +57,7 @@ class SimpleCvMail extends Mailable
             with: [
                 'cv' => $this->cv,
                 'userName' => $this->userName,
+                'recipientEmail' => $this->recipientEmail,
             ]
         );
     }

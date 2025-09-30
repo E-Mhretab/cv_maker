@@ -34,7 +34,8 @@ Route::middleware('auth')->group(function () {
 
 // Guest CV creation routes (no authentication required)
 Route::get('/create-cv', [CvController::class, 'guestCreate'])->name('guest.cvs.create');
-Route::post('/create-cv/form', [CvController::class, 'guestCreateForm'])->name('guest.cvs.create-form');
+Route::get('/create-cv/form', [CvController::class, 'guestCreateForm'])->name('guest.cvs.create-form');
+Route::post('/create-cv/form', [CvController::class, 'guestCreateForm'])->name('guest.cvs.create-form-post');
 Route::post('/create-cv/store', [CvController::class, 'guestStore'])->name('guest.cvs.store');
 Route::get('/cv/{cv}/view', [CvController::class, 'guestShow'])->name('guest.cvs.show');
 
@@ -54,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cv/{cv}/publish', [CvController::class, 'publish'])->name('cvs.publish');
     Route::post('/cv/{cv}/send-email', [CvController::class, 'sendEmail'])->name('cvs.send-email');
     Route::post('/cv/{cv}/send-sendgrid', [CvController::class, 'sendViaSendGrid'])->name('cvs.send-sendgrid');
+    Route::post('/cv/{cv}/send-hybrid', [CvController::class, 'sendHybridEmail'])->name('cvs.send-hybrid');
 
     // PDF Export routes
     Route::get('/cvs/{cv}/pdf', [ResumePdfController::class, 'download'])->name('cvs.pdf');

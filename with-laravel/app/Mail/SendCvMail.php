@@ -19,14 +19,16 @@ class SendCvMail extends Mailable
 
     public $cv;
     public $userName;
+    public $recipientEmail;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Cv $cv, string $userName)
+    public function __construct(Cv $cv, string $userName, string $recipientEmail = null)
     {
         $this->cv = $cv;
         $this->userName = $userName;
+        $this->recipientEmail = $recipientEmail ?? $cv->email;
     }
 
     /**
@@ -35,7 +37,8 @@ class SendCvMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Uw CV is klaar - ' . $this->cv->name,
+            subject: 'CV van ' . $this->cv->name . ' - Business Development',
+            from: new \Illuminate\Mail\Mailables\Address(env('MAIL_FROM_ADDRESS', 'esey@businessdevelopment.es'), env('MAIL_FROM_NAME', 'Business Development')),
         );
     }
 
@@ -44,11 +47,23 @@ class SendCvMail extends Mailable
      */
     public function content(): Content
     {
+        // Check if PDF generation will be successful
+        $hasPdfAttachment = false;
+        try {
+            $pdfService = app(PdfExportService::class);
+            $result = $pdfService->generatePdf($this->cv);
+            $hasPdfAttachment = isset($result['success']) && $result['success'] && isset($result['content']) && !empty($result['content']);
+        } catch (\Exception $e) {
+            $hasPdfAttachment = false;
+        }
+
         return new Content(
             view: 'emails.cv-email',
             with: [
                 'cv' => $this->cv,
                 'userName' => $this->userName,
+                'recipientEmail' => $this->recipientEmail,
+                'hasPdfAttachment' => $hasPdfAttachment,
             ]
         );
     }
@@ -86,19 +101,21 @@ class SendCvMail extends Mailable
                     
                 \Log::info('PDF attachment added to email', ['cv_id' => $this->cv->id, 'filename' => $filename]);
             } else {
-                \Log::warning('PDF generation failed or returned empty content', [
+                \Log::warning('PDF generation failed or returned empty content - skipping PDF attachment', [
                     'cv_id' => $this->cv->id,
                     'success' => $result['success'] ?? false,
                     'has_content' => !empty($result['content'] ?? null),
                     'result_keys' => array_keys($result ?? [])
                 ]);
+                // Don't add any attachment if PDF generation failed
             }
         } catch (\Exception $e) {
-            \Log::error('Failed to generate PDF for email', [
+            \Log::error('Failed to generate PDF for email - skipping PDF attachment', [
                 'cv_id' => $this->cv->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            // Don't add any attachment if PDF generation failed
         }
         
         return $attachments;

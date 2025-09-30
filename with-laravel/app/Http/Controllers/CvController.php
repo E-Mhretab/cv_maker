@@ -13,6 +13,8 @@ use App\Http\Requests\StoreCvRequest;
 use App\Http\Requests\UpdateCvRequest;
 use App\Mail\SendGridCvMail;
 use App\Mail\SimpleSendGridMail;
+use App\Mail\SendCvMail;
+use App\Mail\SimpleCvMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -264,12 +266,12 @@ class CvController extends Controller
             \Log::info('Committing transaction');
             DB::commit();
 
-            // Send CV via SendGrid to the user
+            // Send CV via SMTP to the user (simple version without PDF)
             try {
                 $user = Auth::user();
                 $userName = $user->name ?? $cv->name;
                 
-                \Log::info('Sending CV via SendGrid', ['cv_id' => $cv->id, 'user_email' => $cv->email]);
+                \Log::info('Sending CV via SMTP', ['cv_id' => $cv->id, 'user_email' => $cv->email]);
                 
                 // Load CV with all relationships for email
                 $cv->load([
@@ -282,14 +284,14 @@ class CvController extends Controller
                     'hobbies'
                 ]);
                 
-                // Send via SendGrid (simple version without PDF)
-                Mail::mailer('sendgrid')
+                // Send via SMTP (simple version without PDF)
+                Mail::mailer('smtp')
                     ->to($cv->email)
-                    ->send(new SimpleSendGridMail($cv, $userName, $cv->email));
+                    ->send(new SimpleCvMail($cv, $userName, $cv->email));
                 
-                \Log::info('CV sent via SendGrid successfully', ['cv_id' => $cv->id]);
+                \Log::info('CV sent via SMTP successfully', ['cv_id' => $cv->id]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send CV via SendGrid', [
+                \Log::error('Failed to send CV via SMTP', [
                     'cv_id' => $cv->id, 
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
@@ -299,7 +301,7 @@ class CvController extends Controller
 
             \Log::info('CV created successfully, redirecting to show page', ['cv_id' => $cv->id]);
             return redirect()->route('cvs.show', $cv->id)
-                ->with('success', 'CV created successfully! Een bevestiging is via SendGrid naar uw e-mailadres gestuurd.');
+                ->with('success', 'CV created successfully! Een bevestiging is via SMTP naar uw e-mailadres gestuurd.');
 
         } catch (\Exception $e) {
             \Log::error('Error creating CV', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -687,6 +689,28 @@ class CvController extends Controller
      */
     public function guestCreateForm(Request $request)
     {
+        // Handle GET request - show form with template selection
+        if ($request->isMethod('get')) {
+            // If no template specified, redirect to template selection
+            if (!$request->has('template_type')) {
+                return redirect()->route('guest.cvs.create');
+            }
+            
+            $templateType = $request->template_type;
+            
+            // Convert template name to integer for database
+            $templateMap = [
+                'nathan' => 2,
+                'esey' => 1,
+                'mirian' => 3
+            ];
+            
+            $templateId = $templateMap[$templateType] ?? 1;
+            
+            return view('cvs.create', compact('templateType', 'templateId'));
+        }
+        
+        // Handle POST request - validate and process form submission
         $request->validate([
             'template_type' => 'required|string|in:nathan,esey,mirian'
         ]);
@@ -960,14 +984,14 @@ class CvController extends Controller
                 'hobbies'
             ]);
             
-            // Send via SendGrid (simple version without PDF)
-            Mail::mailer('sendgrid')
+            // Send via SMTP (simple version without PDF)
+            Mail::mailer('smtp')
                 ->to($cv->email)
-                ->send(new SimpleSendGridMail($cv, $userName, $cv->email));
+                ->send(new SimpleCvMail($cv, $userName, $cv->email));
             
             \Log::info('CV email sent successfully', ['cv_id' => $cv->id]);
             
-            return redirect()->back()->with('success', 'CV is succesvol via SendGrid naar uw e-mailadres gestuurd!');
+            return redirect()->back()->with('success', 'CV is succesvol via SMTP naar uw e-mailadres gestuurd!');
             
         } catch (\Exception $e) {
             \Log::error('Failed to send CV email', [
@@ -1040,6 +1064,85 @@ class CvController extends Controller
             ]);
             
             return redirect()->back()->withErrors(['error' => 'Er is een fout opgetreden bij het versturen van de CV via SendGrid: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Send CV via hybrid system (SMTP for single, SendGrid for multiple)
+     */
+    public function sendHybridEmail(Request $request, Cv $cv)
+    {
+        // Check if user can access this CV
+        if (Auth::user()->role !== 'admin' && $cv->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Validate the request
+        $request->validate([
+            'recipient_emails' => 'required|string',
+            'recipient_names' => 'nullable|string'
+        ]);
+
+        try {
+            $user = Auth::user();
+            $userName = $user->name ?? $cv->name;
+            
+            // Parse recipient emails (comma-separated or single)
+            $recipientEmails = array_map('trim', explode(',', $request->recipient_emails));
+            $recipientNames = $request->recipient_names ? 
+                array_map('trim', explode(',', $request->recipient_names)) : 
+                array_fill(0, count($recipientEmails), 'Geachte heer/mevrouw');
+
+            // Load CV with all relationships for email
+            $cv->load([
+                'user', 'metadata', 'workExperiences', 'education', 'skills', 'languages', 'hobbies'
+            ]);
+
+            \Log::info('Sending CV via hybrid system', [
+                'cv_id' => $cv->id,
+                'recipient_count' => count($recipientEmails),
+                'recipients' => $recipientEmails
+            ]);
+
+            // Determine which system to use based on recipient count
+            if (count($recipientEmails) === 1) {
+                // Single recipient - use SMTP with PDF
+                \Log::info('Using SMTP for single recipient', ['email' => $recipientEmails[0]]);
+                
+                Mail::mailer('smtp')
+                    ->to($recipientEmails[0])
+                    ->send(new SendCvMail($cv, $recipientNames[0], $recipientEmails[0]));
+
+                $message = 'CV is succesvol via SMTP verzonden naar ' . $recipientEmails[0] . '!';
+            } else {
+                // Multiple recipients - use SendGrid without PDF
+                \Log::info('Using SendGrid for multiple recipients', ['count' => count($recipientEmails)]);
+                
+                foreach ($recipientEmails as $index => $email) {
+                    Mail::mailer('sendgrid')
+                        ->to($email)
+                        ->send(new SimpleSendGridMail($cv, $recipientNames[$index] ?? 'Geachte heer/mevrouw', $email));
+                }
+
+                $message = 'CV is succesvol via SendGrid verzonden naar ' . count($recipientEmails) . ' ontvangers!';
+            }
+
+            \Log::info('Hybrid email sent successfully', [
+                'cv_id' => $cv->id,
+                'recipient_count' => count($recipientEmails)
+            ]);
+
+            return redirect()->back()->with('success', $message);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send hybrid email', [
+                'cv_id' => $cv->id,
+                'recipient_emails' => $request->recipient_emails,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()->withErrors(['error' => 'Er is een fout opgetreden bij het versturen van de CV: ' . $e->getMessage()]);
         }
     }
 }
