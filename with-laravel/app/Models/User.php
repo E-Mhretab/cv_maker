@@ -29,6 +29,10 @@ class User extends Authenticatable
         'is_active',
         'last_login',
         'profile_photo',
+        'google_drive_file_id',
+        'google_access_token',
+        'google_refresh_token',
+        'google_token_expires_at',
     ];
 
     /**
@@ -40,6 +44,8 @@ class User extends Authenticatable
         'password',
         'password_hash',
         'remember_token',
+        'google_access_token',
+        'google_refresh_token',
     ];
 
     /**
@@ -52,6 +58,7 @@ class User extends Authenticatable
         return [
             'is_active' => 'boolean',
             'last_login' => 'datetime',
+            'google_token_expires_at' => 'datetime',
         ];
     }
 
@@ -171,5 +178,63 @@ class User extends Authenticatable
     public function setNameAttribute($value)
     {
         $this->attributes['username'] = $value;
+    }
+
+    /**
+     * Get the Google Drive web view URL.
+     */
+    public function getGoogleDriveWebLinkAttribute()
+    {
+        if ($this->google_drive_file_id) {
+            return "https://drive.google.com/file/d/{$this->google_drive_file_id}/view";
+        }
+        return null;
+    }
+
+    /**
+     * Get the Google Drive edit URL.
+     */
+    public function getGoogleDriveEditLinkAttribute()
+    {
+        if ($this->google_drive_file_id) {
+            return "https://drive.google.com/file/d/{$this->google_drive_file_id}/edit";
+        }
+        return null;
+    }
+
+    /**
+     * Get the Google Drive download URL.
+     */
+    public function getGoogleDriveDownloadLinkAttribute()
+    {
+        if ($this->google_drive_file_id) {
+            return "https://drive.google.com/uc?export=download&id={$this->google_drive_file_id}";
+        }
+        return null;
+    }
+
+    /**
+     * Check if profile photo is synced to Google Drive.
+     */
+    public function hasGoogleDrivePhoto()
+    {
+        return !empty($this->google_drive_file_id);
+    }
+
+    /**
+     * Check if user has valid Google OAuth token.
+     */
+    public function hasValidGoogleToken(): bool
+    {
+        return !empty($this->google_refresh_token) 
+            && (!$this->google_token_expires_at || $this->google_token_expires_at->isFuture());
+    }
+
+    /**
+     * Check if user is connected to Google Drive.
+     */
+    public function isGoogleDriveConnected(): bool
+    {
+        return !empty($this->google_refresh_token);
     }
 }

@@ -18,6 +18,10 @@
 *.p12
 *.pfx
 
+# Google Drive Service Account
+/storage/app/google/
+!storage/app/google/.gitkeep
+
 # IDE files
 .phpactor.json
 .phpunit.result.cache

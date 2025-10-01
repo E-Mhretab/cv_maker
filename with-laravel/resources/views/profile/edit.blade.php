@@ -111,10 +111,31 @@
             </div>
         </div>
 
-        <!-- Success Message -->
+        <!-- Success Messages -->
         @if (session('status') === 'profile-updated')
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>Profile updated successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        @if (session('status') === 'google-drive-connected')
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fab fa-google-drive me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        @if (session('status') === 'google-drive-disconnected')
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
@@ -137,6 +158,23 @@
                                 @if($user->profile_photo)
                                     <p class="mb-2"><strong>Current Profile Photo</strong></p>
                                     <p class="text-muted small mb-3">Upload a new photo to replace this one</p>
+                                    
+                                    @if($user->role === 'admin' && $user->hasGoogleDrivePhoto())
+                                        <div class="alert alert-success py-2 px-3 mb-3">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="fab fa-google-drive me-2"></i>
+                                                <strong class="small">Synced to Google Drive</strong>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ $user->google_drive_web_link }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>View
+                                                </a>
+                                                <a href="{{ $user->google_drive_download_link }}" target="_blank" class="btn btn-outline-info btn-sm">
+                                                    <i class="fas fa-download me-1"></i>Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
                                 @else
                                     <p class="mb-2"><strong>No Profile Photo</strong></p>
                                     <p class="text-muted small mb-3">Upload a photo to personalize your profile</p>
@@ -199,6 +237,127 @@
                 </div>
             </div>
         </div>
+
+        <!-- Google Drive Connection Section (ADMIN ONLY) -->
+        @if($user->role === 'admin')
+        <div class="row mb-4">
+            <div class="col-12">
+                @php
+                    $adminToken = \App\Models\AdminGoogleToken::getToken();
+                    $isConnected = $adminToken && $adminToken->refresh_token;
+                @endphp
+                <div class="card card-custom {{ $isConnected ? 'border-success' : 'border-warning' }}">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h3 class="h5 mb-2">
+                                    <i class="fab fa-google-drive me-2"></i>Google Drive Cloud Backup (System-wide)
+                                    <span class="badge bg-warning text-dark">Admin Only</span>
+                                </h3>
+                                @if($isConnected)
+                                    <div class="alert alert-success py-2 px-3 mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-check-circle me-2 fs-5"></i>
+                                            <div>
+                                                <strong>Connected & Active</strong>
+                                                <p class="mb-0 small">All users' profile photos are automatically backed up to your Google Drive</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <p class="small mb-1"><strong>Storage Location:</strong></p>
+                                        <p class="small text-muted mb-1">
+                                            <i class="fas fa-user me-1"></i>Account: <strong>nathanjethoe007@gmail.com</strong>
+                                        </p>
+                                        <p class="small text-muted mb-0">
+                                            <i class="fas fa-folder me-1"></i>Folder: <strong>laravel_uploads</strong>
+                                        </p>
+                                    </div>
+                                @else
+                                    <div class="alert alert-warning py-2 px-3 mb-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Not Connected</strong> - Profile photos are stored locally only
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        @if($isConnected)
+                            <div class="border-top pt-3 mt-3">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h6 class="small mb-2"><strong>System Status:</strong></h6>
+                                        <ul class="small text-muted mb-0">
+                                            <li>Status: <span class="text-success fw-bold">Active & Syncing</span></li>
+                                            <li>Token expires: {{ $adminToken->expires_at ? $adminToken->expires_at->diffForHumans() : 'Never' }}</li>
+                                            <li>Auto-refresh: <span class="text-success">Enabled</span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <form method="POST" action="{{ route('google.disconnect') }}" onsubmit="return confirm('⚠️ WARNING: This will disconnect Google Drive backup for ALL users.\n\nExisting files will remain in your Drive, but new uploads will not be synced.\n\nContinue?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-unlink me-1"></i>Disconnect System
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <!-- Admin Sync Actions -->
+                                <div class="border-top pt-3 mt-3">
+                                    <h6 class="small mb-3"><strong>Admin Actions:</strong></h6>
+                                    <div class="d-flex gap-2">
+                                        @if($user->profile_photo && !$user->hasGoogleDrivePhoto())
+                                            <form method="POST" action="{{ route('google.sync-photo') }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-sync me-1"></i>Sync My Photo to Drive
+                                                </button>
+                                            </form>
+                                        @endif
+                                        
+                                        <form method="POST" action="{{ route('google.sync-all-photos') }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-sync-alt me-1"></i>Sync All Users' Photos
+                                            </button>
+                                        </form>
+                                        
+                                        <a href="https://drive.google.com/drive/folders/{{ env('GOOGLE_DRIVE_FOLDER_ID', '1Js5d8gjLylWTA6AsxstCjbEaleq19TkX') }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                            <i class="fab fa-google-drive me-1"></i>Open Drive Folder
+                                        </a>
+                                    </div>
+                                    <p class="small text-muted mt-2 mb-0">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Sync all will upload/update ALL users' current profile photos to Google Drive
+                                    </p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="border-top pt-3 mt-3">
+                                <h6 class="small mb-3"><strong>Setup Google Drive Backup:</strong></h6>
+                                <div class="d-flex gap-3 align-items-start">
+                                    <div class="flex-grow-1">
+                                        <ol class="small text-muted mb-0">
+                                            <li>Add <code>nathanjethoe007@gmail.com</code> as test user in Google Cloud Console</li>
+                                            <li>Click "Connect Google Drive" button →</li>
+                                            <li>Authorize with <strong>nathanjethoe007@gmail.com</strong></li>
+                                            <li>All users' photos will be backed up automatically!</li>
+                                        </ol>
+                                    </div>
+                                    <div>
+                                        <a href="{{ route('google.connect') }}" class="btn btn-primary">
+                                            <i class="fab fa-google-drive me-2"></i>Connect Google Drive
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
 
         <!-- Profile Information Form -->
         <div class="row mb-4">

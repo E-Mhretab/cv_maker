@@ -7,6 +7,7 @@ use App\Http\Controllers\TemplateController;
 use App\Http\Controllers\ResumePdfController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\GoogleDriveController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,6 +31,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Google Drive OAuth routes
+    Route::get('/google/connect', [GoogleDriveController::class, 'connect'])->name('google.connect');
+    Route::get('/google/callback', [GoogleDriveController::class, 'callback'])->name('google.callback');
+    Route::post('/google/disconnect', [GoogleDriveController::class, 'disconnect'])->name('google.disconnect');
+    Route::post('/google/sync-photo', [GoogleDriveController::class, 'syncPhoto'])->name('google.sync-photo');
+    Route::post('/google/sync-all-photos', [GoogleDriveController::class, 'syncAllPhotos'])->name('google.sync-all-photos');
 });
 
 // Guest CV creation routes (no authentication required)
