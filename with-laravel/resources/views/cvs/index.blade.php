@@ -36,6 +36,25 @@
             color: white;
             border-radius: 10px;
         }
+        .user-profile-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            margin-right: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .user-profile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -58,11 +77,21 @@
             <div class="navbar-nav ms-auto">
                 @auth
                     <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i>{{ auth()->user()->name }}
-                            <span class="badge bg-light text-dark ms-1">{{ ucfirst(auth()->user()->role ?? 'User') }}</span>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            @if(auth()->user()->profile_photo)
+                                <img src="{{ auth()->user()->profile_photo_url }}" alt="Profile" class="user-profile-photo">
+                            @else
+                                <div class="user-profile-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            @endif
+                            {{ auth()->user()->name }}
+                            @if(auth()->user()->role === 'admin')
+                                <span class="badge bg-light text-dark ms-1">Admin</span>
+                            @endif
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>
                             <li><a class="dropdown-item" href="{{ route('cvs.create') }}"><i class="fas fa-plus me-2"></i>Create CV</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>

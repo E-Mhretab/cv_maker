@@ -25,10 +25,17 @@
                 @auth
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                            <div class="user-avatar">
-                                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                            </div>
+                            @if(auth()->user()->profile_photo)
+                                <img src="{{ auth()->user()->profile_photo_url }}" alt="Profile" class="user-avatar-photo">
+                            @else
+                                <div class="user-avatar">
+                                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                                </div>
+                            @endif
                             {{ auth()->user()->name }}
+                            @if(auth()->user()->role === 'admin')
+                                <span class="badge bg-primary ms-1">Admin</span>
+                            @endif
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>My Profile</a></li>

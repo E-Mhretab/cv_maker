@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -20,12 +21,14 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'username',
+        'name',
         'email',
         'password',
         'password_hash',
         'role',
         'is_active',
         'last_login',
+        'profile_photo',
     ];
 
     /**
@@ -130,5 +133,43 @@ class User extends Authenticatable
     public static function findByEmail($email)
     {
         return static::where('email', $email)->first();
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Get the profile photo URL.
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->profile_photo) {
+            return asset('storage/' . $this->profile_photo);
+        }
+        return null;
+    }
+
+    /**
+     * Get the name attribute (alias for username).
+     */
+    public function getNameAttribute()
+    {
+        return $this->username;
+    }
+
+    /**
+     * Set the name attribute (alias for username).
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['username'] = $value;
     }
 }

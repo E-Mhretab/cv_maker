@@ -1,8 +1,24 @@
 *.log
 .DS_Store
+
+# Environment files - NEVER commit these!
 .env
+.env.*
+!.env.example
 .env.backup
 .env.production
+.env.local
+.env.staging
+
+# API Keys and Secrets
+**/config/keys/
+**/config/secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# IDE files
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -11,14 +27,50 @@
 /.phpunit.cache
 /.vscode
 /.zed
+
+# Composer
 /auth.json
+/vendor
+
+# Node
 /node_modules
+npm-debug.log
+yarn-error.log
+
+# Laravel
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitkeep
+
+# Homestead
 Homestead.json
 Homestead.yaml
+
+# System files
 Thumbs.db
+.DS_Store
+
+# Database files
+*.sqlite
+*.sqlite-journal
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# Backup files
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+
+# Uploaded files (excluding git-tracked sample images)
+/storage/app/public/uploads/
+!/storage/app/public/uploads/.gitkeep
+
+# Sensitive documentation (if needed)
+# CREDENTIALS.md
+# API_KEYS.md
